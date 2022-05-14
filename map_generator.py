@@ -1,4 +1,4 @@
-import math, random as r, pgzrun
+import math, random as r, pygame as pg, resource_handler as rh
 
 def generate_map(size): #generates a map with a tupel/list giving the amount of rooms on the x-/y-axis
 	mwidth = size[0]
@@ -49,33 +49,45 @@ def generate_tilemap(roomI, rooms, msize): #generates a random tilemap for a roo
 	# checks for bottom and right exit
 	if room[3]:
 		for y in range((int(rheight/2)-1), (int(rheight/2)+2)):
-			f = Actor("floor", topleft=((rwidth-1)*50, y*50))
+			img = [None, None]
+			img[0], img[1] = rh.load_img("floor.png")
+			f = [img, ((rwidth-1)*50, y*50)]
 			tilemap.append([f, (rwidth-1, y)])
 			allcoords.remove((rwidth-1, y))
 	if room[4]:
 		for x in range((int(rwidth/2)-1), (int(rwidth/2)+2)):
-			f = Actor("floor", topleft=(x*50, (rheight-1)*50))
+			img = [None, None]
+			img[0], img[1] = rh.load_img("floor.png")
+			f = [img, (x*50, (rheight-1)*50)]
 			tilemap.append([f, (x, rheight-1)])
 			allcoords.remove((x, rheight-1))
 	# checks for top and left exit
 	if rooms[roomI-mheight][3] and (roomI-mheight >= 0):
 		for y in range((int(rheight/2)-1), (int(rheight/2)+2)):
-			f = Actor("floor", topleft=(0, y*50))
+			img = [None, None]
+			img[0], img[1] = rh.load_img("floor.png")
+			f = [img, (0, y*50)]
 			tilemap.append([f, (0, y)])
 			allcoords.remove((0, y))
 	if rooms[roomI-1][4] and (roomI-1 >= 0):
 		for x in range((int(rwidth/2)-1), (int(rwidth/2)+2)):
-			f = Actor("floor", topleft=(x*50, 0))
+			img = [None, None]
+			img[0], img[1] = rh.load_img("floor.png")
+			f = [img, (x*50, 0)]
 			tilemap.append([f, (x, 0)])
 			allcoords.remove((x, 0))
 	# creates tilemap
 	for x in range(1, rwidth-1):
 		for y in range(1, rheight-1):
-			f = Actor("floor", topleft=(x*50, y*50))
+			img = [None, None]
+			img[0], img[1] = rh.load_img("floor.png")
+			f = [img, (x*50, y*50)]
 			tilemap.append([f, (x, y)])
 			allcoords.remove((x, y))
 	for i in allcoords:
-		f = Actor("pillar", topleft=(i[0]*50, i[1]*50))
+		img = [None, None]
+		img[0], img[1] = rh.load_img("pillar.png")
+		f = [img, (i[0]*50, i[1]*50)]
 		tilemap.append([f, (i[0], i[1])])
 	# if its the bottom right room, a blue square in the middle is added
 	if roomI == (len(rooms)-1):
@@ -87,9 +99,86 @@ def generate_tilemap(roomI, rooms, msize): #generates a random tilemap for a roo
 				break
 			else:
 				continue
-		f = Actor("end", topleft=(x*50, y*50))
+		img = [None, None]
+		img[0], img[1] = rh.load_img("end.png")
+		f = [img, (x*50, y*50)]
 		tilemap.append([f, (x, y)])
 	return tilemap
 
+#tilecoords:	coords = (tile[0][1][0],tile[0][1][1])
+
+def draw_room(tm, surface):
+	screen.blit(surface, (0,0))
+	for i in tm:
+		coords = (i[0][1][0],i[0][1][1])
+		#print(coords)
+		screen.blit(i[0][0][0], coords)
+	pg.display.flip()
+
+
 if __name__=="__main__":
-	pass
+	pg.init()
+	msize = [r.randint(4, 7), r.randint(4, 7)]
+	# ~ msize = ["", 5, 7]
+	#print(msize)
+	WIDTH = 800
+	HEIGHT = 800
+	screen = pg.display.set_mode((WIDTH, HEIGHT))
+	bg = pg.Surface(screen.get_size())
+	bg = bg.convert()
+	bg.fill((0,0,0))
+	roommap = generate_map(msize)
+	roomI = 0
+	screen.blit(bg, (0,0))
+	tm = generate_tilemap(roomI, roommap, msize)
+	#print(tm)
+	#print(len(tm))
+	draw_room(tm, bg)
+	pg.display.flip()
+	clock = pg.time.Clock()
+	going = 1
+	while going:
+		roomIn = roomI
+		for event in pg.event.get():
+			if event.type == pg.QUIT:
+				going = False
+			elif event.type == pg.KEYDOWN:
+				if event.key == pg.K_LEFT:
+					roomIn -= msize[1]
+					if roomIn >= 0 and roommap[roomIn][3]:
+						roomI = roomIn
+						print(roomI)
+						# ~ print(roommap)
+					else:
+						print("nope")
+				elif event.key == pg.K_UP:
+					roomIn -= 1
+					# ~ print(roommap[roomIn-1])
+					# ~ print("roomIN: " + str(roomIn))
+					# ~ print(roommap)
+					if roomIn >= 0 and roommap[roomIn][4]:
+						roomI = roomIn
+						print(roomI)
+						# ~ print(roommap)
+					else:
+						print("nope")
+				elif event.key == pg.K_RIGHT:
+					roomIn += msize[1]
+					if roomIn <= len(roommap)-1 and roommap[roomI][3]:
+						roomI = roomIn
+						print(roomI)
+						# ~ print(roommap)
+					else:
+						print("nope")
+				elif event.key == pg.K_DOWN:
+					roomIn += 1
+					if roomIn <= len(roommap)-1 and roommap[roomI][4]:
+						roomI = roomIn
+						print(roomI)
+						# ~ print(roommap)
+					else:
+						print("nope")
+			draw_room(generate_tilemap(roomI, roommap, msize), bg)
+		clock.tick(60)
+	pg.quit()
+
