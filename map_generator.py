@@ -51,6 +51,7 @@ def generate_tilemap(roomI, rooms, msize): #generates a random tilemap for a roo
 		for y in range((int(rheight/2)-1), (int(rheight/2)+2)):
 			img = [None, None]
 			img[0], img[1] = rh.load_img("floor.png")
+			img[1].move_ip(((rwidth-1)*50+100, y*50+100))
 			f = [img, ((rwidth-1)*50+100, y*50+100)]
 			tilemap.append([f, (rwidth-1, y), "floor.png"])
 			allcoords.remove((rwidth-1, y))
@@ -58,6 +59,7 @@ def generate_tilemap(roomI, rooms, msize): #generates a random tilemap for a roo
 		for x in range((int(rwidth/2)-1), (int(rwidth/2)+2)):
 			img = [None, None]
 			img[0], img[1] = rh.load_img("floor.png")
+			img[1].move_ip((x*50+100, (rheight-1)*50+100))
 			f = [img, (x*50+100, (rheight-1)*50+100)]
 			tilemap.append([f, (x, rheight-1), "floor.png"])
 			allcoords.remove((x, rheight-1))
@@ -66,6 +68,7 @@ def generate_tilemap(roomI, rooms, msize): #generates a random tilemap for a roo
 		for y in range((int(rheight/2)-1), (int(rheight/2)+2)):
 			img = [None, None]
 			img[0], img[1] = rh.load_img("floor.png")
+			img[1].move_ip((100, y*50+100))
 			f = [img, (100, y*50+100)]
 			tilemap.append([f, (0, y), "floor.png"])
 			allcoords.remove((0, y))
@@ -73,6 +76,7 @@ def generate_tilemap(roomI, rooms, msize): #generates a random tilemap for a roo
 		for x in range((int(rwidth/2)-1), (int(rwidth/2)+2)):
 			img = [None, None]
 			img[0], img[1] = rh.load_img("floor.png")
+			img[1].move_ip((x*50+100, 100))
 			f = [img, (x*50+100, 100)]
 			tilemap.append([f, (x, 0), "floor.png"])
 			allcoords.remove((x, 0))
@@ -81,12 +85,14 @@ def generate_tilemap(roomI, rooms, msize): #generates a random tilemap for a roo
 		for y in range(1, rheight-1):
 			img = [None, None]
 			img[0], img[1] = rh.load_img("floor.png")
+			img[1].move_ip((x*50+100, y*50+100))
 			f = [img, (x*50+100, y*50+100)]
 			tilemap.append([f, (x, y), "floor.png"])
 			allcoords.remove((x, y))
 	for i in allcoords:
 		img = [None, None]
 		img[0], img[1] = rh.load_img("pillar.png")
+		img[1].move_ip((i[0]*50+100, i[1]*50+100))
 		f = [img, (i[0]*50+100, i[1]*50+100)]
 		tilemap.append([f, (i[0], i[1]), "pillar.png"])
 	# if its the bottom right room, a blue square in the middle is added
@@ -101,18 +107,20 @@ def generate_tilemap(roomI, rooms, msize): #generates a random tilemap for a roo
 				continue
 		img = [None, None]
 		img[0], img[1] = rh.load_img("end.png")
+		img[1].move_ip((x*50+100, y*50+100))
 		f = [img, (x*50+100, y*50+100), "end.png"]
 		tilemap.append([f, (x, y)])
 	return tilemap
 
 #tilecoords:	coords = (tile[0][1][0],tile[0][1][1])
 
-def draw_room(tm, surface, screen):
+def draw_room(tm, surface, screen, buffer):
 	screen.blit(surface, (0,0))
 	for i in tm:
 		coords = (i[0][1][0],i[0][1][1])
 		#print(coords)
 		screen.blit(i[0][0][0], coords)
+		buffer.blit(i[0][0][0], coords)
 	pg.display.flip()
 
 
@@ -126,7 +134,7 @@ if __name__=="__main__":
 	screen = pg.display.set_mode((WIDTH, HEIGHT))
 	bg = pg.Surface(screen.get_size())
 	bg = bg.convert()
-	bg.fill((0,0,0))
+	#bg.fill((0,0,0))
 	roommap = generate_map(msize)
 	roomI = 0
 	screen.blit(bg, (0,0))
@@ -134,6 +142,11 @@ if __name__=="__main__":
 	#print(tm)
 	#print(len(tm))
 	draw_room(tm, bg, screen)
+	fg = pg.Surface(screen.get_size(), pg.SRCALPHA)
+	#fg.fill((0,0,0))
+	#screen.blit(fg, (0,0))
+	lol, lol_rect = rh.load_img("easworddown.png")
+	fg.blit(lol, (200,200))
 	pg.display.flip()
 	clock = pg.time.Clock()
 	going = 1
@@ -179,5 +192,10 @@ if __name__=="__main__":
 					else:
 						print("nope")
 			draw_room(generate_tilemap(roomI, roommap, msize), bg, screen)
+			screen.blit(fg, (0,0))
+			lol, lol_rect = rh.load_img("easworddown.png")
+			fg.blit(lol, (200,200))
+			screen.blit(fg, (0,0), area=(200,200,50,50))
+			pg.display.flip()
 		clock.tick(60)
 	pg.quit()
