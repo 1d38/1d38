@@ -26,7 +26,7 @@ class Player(pg.sprite.Sprite):
 
 	def check_events(self, tilemap, roommap):
 		#return-codes: 0 = game quit; 1 = normal move, 2 = collide with wall, 3 = end tile collision
-		self.oldPos = self.pos
+		self.oldPos = self.pos.copy()
 		for event in pg.event.get():
 			if event.type == pg.QUIT:
 				return 0
@@ -67,7 +67,7 @@ class Player(pg.sprite.Sprite):
 			#self.rect.move_ip(self.pos)
 		#print(self.pos)
 		self.rect.move_ip(self.pos_change)
-		self.pos_change = [0,0]
+		
 		tile_rects = []
 		end_tile = None
 		for i in tilemap:
@@ -78,51 +78,64 @@ class Player(pg.sprite.Sprite):
 		#print(tile_rects)
 		#print(self.rect.collidelist(tile_rects))
 		if self.rect.collidelist(tile_rects) != -1:
-			self.pos = self.oldPos
+			#called
+			#print(self.pos, "  1")
+			self.pos[0] -= self.pos_change[0]
+			self.pos[1] -= self.pos_change[1]
+			self.rect.move_ip((-self.pos_change[0], -self.pos_change[1]))
+			print(self.pos_change)
+			#print(self.pos, "  2")
+			self.pos_change = [0,0]
 			return 2
 		if end_tile:
 			if self.rect.colliderect(end_tile):
 				self.check_End()
 		if self.pos[0] < 100:
 			print("called")
-			return 4#right
+			self.pos_change = [0,0]
+			return 4#left exit
 		elif self.pos[0]+100 > self.room[1]*50+150:
 			print("called")
-			return 5#left
+			self.pos_change = [0,0]
+			return 5#right exit
 		elif self.pos[1] < 100:
 			print("called")
-			return 6#up
+			self.pos_change = [0,0]
+			return 6#top exit
 		elif self.pos[1]+100 > self.room[2]*50+150:
 			print("called")
-			return 7#down
+			self.pos_change = [0,0]
+			return 7#bottom exit
 		#normal move
+		print(self.rect)
+		self.pos_change = [0,0]
 		return 1
 
 	def change_room(self, roommap, map_size, entry):
-		if entry == 0:#left entry
-			self.room = roommap[self.room[0][0]+1+self.room[0][1]*map_size[0]]
-			self.pos = [100, self.room[2]*25+100]
+		if entry == 0:#right entry
+			self.room = roommap[self.room[0][0]-1+self.room[0][1]*map_size[0]]
+			self.pos = [self.room[1]*50+50, self.room[2]*25+100]
 			self.direction = "right"
 			self.image = eval("self.weapon.Pimage_" + self.direction)
 			#self.rect = eval("self.Pweapon.image_" + self.direction + "_rect")
 			return self.room
-		elif entry == 1:#right entry
-			self.room = roommap[self.room[0][0]-1+self.room[0][1]*map_size[0]]
-			self.pos = [self.room[1]*50+50, self.room[2]*25+100]
+		elif entry == 1:#left entry
+			self.room = roommap[self.room[0][0]+1+self.room[0][1]*map_size[0]]
+			self.pos = [100, self.room[2]*25+100]
 			self.direction = "left"
 			self.image = eval("self.weapon.Pimage_" + self.direction)
 			#self.rect = eval("self.Pweapon.image_" + self.direction + "_rect")
 			return self.room
 		elif entry == 2:#bottom entry
 			self.room = roommap[self.room[0][0]+(self.room[0][1]+1)*map_size[1]]
-			self.pos = [self.room[1]*50+50, self.room[2]*25+100]
+			self.pos = [self.room[1]*25+50, self.room[2]*50+50]
 			self.direction = "up"
 			self.image = eval("self.weapon.Pimage_" + self.direction)
 			#self.rect = eval("self.Pweapon.image_" + self.direction + "_rect")
 			return self.room
 		elif entry == 3:#top entry
 			self.room = roommap[self.room[0][0]+(self.room[0][1]-1)*map_size[1]]
-			self.pos = [self.room[1]*50+50, self.room[2]*25+100]
+			self.pos = [self.room[1]*25+50, 100]
 			self.direction = "down"
 			self.image = eval("self.weapon.Pimage_" + self.direction)
 			#self.rect = eval("self.Pweapon.image_" + self.direction + "_rect")
@@ -136,7 +149,7 @@ class Player(pg.sprite.Sprite):
 		if self.idx >= len(self.weapons):
 			self.idx = 0
 		self.weapon = self.weapons[idx]
-		self.image = eval("self.Pweapon.image_" + self.direction)
+		self.image = eval("self.weapon.Pimage_" + self.direction)
 		#self.rect = eval("self.Pweapon.image_" + self.direction + "_rect")
 
 	def pick_Up(self):
@@ -172,7 +185,7 @@ if __name__=="__main__":
 	going = 1
 	while going:
 		returnValue = player.check_events(tm, roommap)
-		print(returnValue)
+		#print(returnValue)
 		if returnValue == 0:
 			going = 0
 		elif returnValue == 3:
@@ -182,12 +195,12 @@ if __name__=="__main__":
 				pass
 		elif returnValue == 4:
 			room = player.change_room(roommap, msize, 0)#left
-			roomI = room[0][0]+1+room[0][1]*msize[0]
+			roomI = room[0][0]-1+room[0][1]*msize[0]
 			tm = mg.generate_tilemap(roomI, roommap, msize)
 			mg.draw_room(tm, bg, screen, buffer)
 		elif returnValue == 5:
 			room = player.change_room(roommap, msize, 1)#right
-			roomI = room[0][0]-1+room[0][1]*msize[0]
+			roomI = room[0][0]+1+room[0][1]*msize[0]
 			tm = mg.generate_tilemap(roomI, roommap, msize)
 			mg.draw_room(tm, bg, screen, buffer)
 		elif returnValue == 6:
@@ -226,5 +239,3 @@ if __name__=="__main__":
 
 	pg.quit()
 
-
-		
