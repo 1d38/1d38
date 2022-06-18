@@ -67,13 +67,13 @@ class Player(pg.sprite.Sprite):
 			#self.rect.move_ip(self.pos)
 		#print(self.pos)
 		self.rect.move_ip(self.pos_change)
-		
 		tile_rects = []
 		end_tile = None
 		for i in tilemap:
+			print(i)
 			if i[2] == "pillar.png":
 				tile_rects.append(i[0][0][1])
-			elif i[2] == "pillar.png":
+			elif i[2] == "end.png":
 				end_tile = i[0][0][1]
 		#print(tile_rects)
 		#print(self.rect.collidelist(tile_rects))
@@ -83,7 +83,7 @@ class Player(pg.sprite.Sprite):
 			self.pos[0] -= self.pos_change[0]
 			self.pos[1] -= self.pos_change[1]
 			self.rect.move_ip((-self.pos_change[0], -self.pos_change[1]))
-			print(self.pos_change)
+			#print(self.pos_change)
 			#print(self.pos, "  2")
 			self.pos_change = [0,0]
 			return 2
@@ -91,55 +91,58 @@ class Player(pg.sprite.Sprite):
 			if self.rect.colliderect(end_tile):
 				self.check_End()
 		if self.pos[0] < 100:
-			print("called")
+			#print("called")
 			self.pos_change = [0,0]
 			return 4#left exit
 		elif self.pos[0]+100 > self.room[1]*50+150:
-			print("called")
+			#print("called")
 			self.pos_change = [0,0]
 			return 5#right exit
 		elif self.pos[1] < 100:
-			print("called")
+			#print("called")
 			self.pos_change = [0,0]
 			return 6#top exit
 		elif self.pos[1]+100 > self.room[2]*50+150:
-			print("called")
+			#print("called")
 			self.pos_change = [0,0]
 			return 7#bottom exit
 		#normal move
-		print(self.rect)
+		#print(self.rect)
 		self.pos_change = [0,0]
 		return 1
 
-	def change_room(self, roommap, map_size, entry):
+	def change_room(self, roommap, map_size, entry, roomI):
 		if entry == 0:#right entry
-			self.room = roommap[self.room[0][0]-1+self.room[0][1]*map_size[0]]
+			self.room = roommap[roomI]
 			self.pos = [self.room[1]*50+50, self.room[2]*25+100]
+			self.rect.update(self.pos, (50,50))
 			self.direction = "right"
 			self.image = eval("self.weapon.Pimage_" + self.direction)
 			#self.rect = eval("self.Pweapon.image_" + self.direction + "_rect")
 			return self.room
 		elif entry == 1:#left entry
-			self.room = roommap[self.room[0][0]+1+self.room[0][1]*map_size[0]]
+			self.room = roommap[roomI]
 			self.pos = [100, self.room[2]*25+100]
+			self.rect.update(self.pos, (50,50))
 			self.direction = "left"
 			self.image = eval("self.weapon.Pimage_" + self.direction)
 			#self.rect = eval("self.Pweapon.image_" + self.direction + "_rect")
 			return self.room
 		elif entry == 2:#bottom entry
-			self.room = roommap[self.room[0][0]+(self.room[0][1]+1)*map_size[1]]
+			self.room = roommap[roomI]
 			self.pos = [self.room[1]*25+50, self.room[2]*50+50]
+			self.rect.update(self.pos, (50,50))
 			self.direction = "up"
 			self.image = eval("self.weapon.Pimage_" + self.direction)
 			#self.rect = eval("self.Pweapon.image_" + self.direction + "_rect")
 			return self.room
 		elif entry == 3:#top entry
-			self.room = roommap[self.room[0][0]+(self.room[0][1]-1)*map_size[1]]
+			self.room = roommap[roomI]
 			self.pos = [self.room[1]*25+50, 100]
+			self.rect.update(self.pos, (50,50))
 			self.direction = "down"
 			self.image = eval("self.weapon.Pimage_" + self.direction)
 			#self.rect = eval("self.Pweapon.image_" + self.direction + "_rect")
-			return self.room
 
 	def attack(self):
 		pass
@@ -169,7 +172,6 @@ if __name__=="__main__":
 	roommap = mg.generate_map(msize)
 	roomI = 0
 	screen.blit(bg, (0,0))
-
 	tm = mg.generate_tilemap(roomI, roommap, msize)
 	mg.draw_room(tm, bg, screen, buffer)
 	clock = pg.time.Clock()
@@ -194,42 +196,30 @@ if __name__=="__main__":
 			else:
 				pass
 		elif returnValue == 4:
-			room = player.change_room(roommap, msize, 0)#left
-			roomI = room[0][0]-1+room[0][1]*msize[0]
+			roomI -= msize[1]
+			player.change_room(roommap, msize, 0, roomI)#left
 			tm = mg.generate_tilemap(roomI, roommap, msize)
 			mg.draw_room(tm, bg, screen, buffer)
 		elif returnValue == 5:
-			room = player.change_room(roommap, msize, 1)#right
-			roomI = room[0][0]+1+room[0][1]*msize[0]
+			roomI += msize[1]
+			player.change_room(roommap, msize, 1, roomI)#right
 			tm = mg.generate_tilemap(roomI, roommap, msize)
 			mg.draw_room(tm, bg, screen, buffer)
 		elif returnValue == 6:
-			room = player.change_room(roommap, msize, 2)#up
-			roomI = room[0][0]+(room[0][1]+1)*msize[1]
+			roomI -= 1
+			player.change_room(roommap, msize, 2, roomI)#top
 			tm = mg.generate_tilemap(roomI, roommap, msize)
 			mg.draw_room(tm, bg, screen, buffer)
 		elif returnValue == 7:
-			room = player.change_room(roommap, msize, 3)#down
-			roomI = room[0][0]+(room[0][1]-1)*msize[1]
+			roomI += 1
+			player.change_room(roommap, msize, 3, roomI)#bottom
 			tm = mg.generate_tilemap(roomI, roommap, msize)
 			mg.draw_room(tm, bg, screen, buffer)
 		elif returnValue == 8:
-			room = player.weapon_change()
+			player.weapon_change()
 		elif returnValue == 9:
 			player.attack()
-		#pg.Rect(player.pos[0]+50, player.pos[1]+50, 50, 50)
-		'''
-		if player.pos[0] <= roommap[roomI][1]*50+125:
-			if player.pos[1] <= roommap[roomI][2]*50+125:
-				rectan = screen.blit(screen, pg.Rect(player.pos[0], player.pos[1], 50, 50), area=pg.Rect(player.pos[0]+50, player.pos[1]+50, 50, 50))
-			elif player.pos[1] > roommap[roomI][2]*50+125:
-				rectan = screen.blit(screen, pg.Rect(player.pos[0], player.pos[1], 50, 50), area=pg.Rect(player.pos[0]+50, player.pos[1]-50, 50, 50))
-		elif player.pos[0] > roommap[roomI][1]*50+125:
-			if player.pos[1] <= roommap[roomI][2]*50+125:
-				rectan = screen.blit(screen, pg.Rect(player.pos[0], player.pos[1], 50, 50), area=pg.Rect(player.pos[0]-50, player.pos[1]+50, 50, 50))
-			elif player.pos[1] > roommap[roomI][2]*50+125:
-				rectan = screen.blit(screen, pg.Rect(player.pos[0], player.pos[1], 50, 50), area=pg.Rect(player.pos[0]-50, player.pos[1]-50, 50, 50))
-		'''
+		print(roomI)
 		player_Group.clear(screen, buffer)
 		rects = player_Group.draw(screen)
 		#print(rects)
